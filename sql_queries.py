@@ -159,13 +159,12 @@ WHERE artist_id IS NOT NULL""")
 
 time_table_insert = ("""
 INSERT INTO time(start_time, hour, day, week, month, year, week_day, is_weekend)
-SELECT to_timestamp(start_time), 
+SELECT DISTINCT to_timestamp(start_time), 
     extract(hour from start_time), extract(day from start_time),
     extract(week from start_time), extract(month from start_time),
     extract(year from start_time),  extract(dayofweek from start_time),
     CASE WHEN EXTRACT(ISODOW FROM start_time) IN (6, 7) THEN true ELSE false END AS is_weekend
-FROM songplays
-GROUP BY start_time""")
+FROM songplays""")
 
 # QUERY LISTS
 
