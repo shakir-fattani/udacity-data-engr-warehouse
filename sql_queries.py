@@ -18,7 +18,6 @@ time_table_drop = "DROP TABLE IF EXISTS time"
 # CREATE TABLES
 
 staging_events_table_create= ("""CREATE TABLE staging_events(
-    event_id INTEGER IDENTITY(0,1),
     artist VARCHAR(255),
     auth VARCHAR(50),
     user_first_name VARCHAR(255),
@@ -36,8 +35,7 @@ staging_events_table_create= ("""CREATE TABLE staging_events(
     status INTEGER, 
     ts BIGINT,
     user_agent TEXT,	
-    user_id INTEGER,
-    PRIMARY KEY (event_id)
+    user_id INTEGER
 )""")
 
 staging_songs_table_create = ("""CREATE TABLE staging_songs(
@@ -50,16 +48,15 @@ staging_songs_table_create = ("""CREATE TABLE staging_songs(
     artist_longitude DOUBLE PRECISION,
     year INTEGER,
     num_songs INTEGER,
-    duration DOUBLE PRECISION,
-    PRIMARY KEY (song_id)
+    duration DOUBLE PRECISION
 )""")
 
 songplay_table_create = ("""CREATE TABLE songplays(
     songplay_id INTEGER IDENTITY(0,1),
-    start_time TIMESTAMP,
-    user_id INTEGER,
+    start_time TIMESTAMP NOT NULL,
+    user_id INTEGER NOT NULL,
     level VARCHAR(50),
-    song_id VARCHAR(50),
+    song_id VARCHAR(50) NOT NULL,
     artist_id VARCHAR(50),
     session_id INTEGER,
     location VARCHAR(255),
@@ -122,8 +119,9 @@ staging_songs_copy = ("""copy staging_songs
 songplay_table_insert = ("""
 INSERT INTO songplays (start_time, user_id, level, song_id, artist_id, session_id, location, user_agent) 
 SELECT  
-    to_timestamp(e.ts/1000) as start_time, e.user_id, e.user_level, s.song_id,
-    s.artist_id, e.session_id, e.location, e.user_agent
+    TIMESTAMP 'epoch' + e.ts/1000 * interval '1 second' as start_time, 
+    e.user_id, e.user_level, s.song_id, s.artist_id, e.session_id, 
+    e.location, e.user_agent
 FROM staging_events e, staging_songs s
 WHERE e.page = 'NextSong' 
 AND e.song_title = s.title 
@@ -137,7 +135,8 @@ SELECT DISTINCT
     user_first_name, 
     user_last_name, 
     user_gender
-FROM staging_events""")
+FROM staging_events
+WHERE page = 'NextSong'""")
 
 song_table_insert = ("""
 INSERT INTO songs (song_id, title, artist_id, year, duration) 
